@@ -40,6 +40,14 @@ sound = np.fromstring("".join(frames), dtype=np.int16)
 left, right = sound[0::2], sound[1::2]
 lf, rf = np.fft.rfft(left), np.fft.rfft(right)
 
+maxFreq = 0
+maxCount = 0
+for i in xrange(0, len(lf)):
+  if lf[i] > maxCount:
+    maxFreq = i
+    maxCount = lf[i]
+print maxFreq
+
 # Plot
 plt.figure(1)
 """
