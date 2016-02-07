@@ -1,21 +1,11 @@
-import sys
-sys.path.append('/usr/local/lib/python2.7/site-packages')
-
+from config import *
 import pyaudio
 import wave
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-CHUNK = 1024
-CHANNELS = 2
-RATE = 44100
-RECORD_SECONDS = 2
-WAVE_OUTPUT_FILENAME = "output.wav"
-
-startFreq = 100.0 * RECORD_SECONDS
-zeroFreq = 500.0 * RECORD_SECONDS
-oneFreq = 1000.0 * RECORD_SECONDS
+RECORD_SECONDS = 7
 
 p = pyaudio.PyAudio()
 
@@ -43,42 +33,16 @@ p.terminate()
 sound = np.fromstring("".join(frames), dtype=np.int16)
 left, right = sound[0::2], sound[1::2]
 lf0, rf0 = np.fft.rfft(left), np.fft.rfft(right)
-
-lf1 = lf0[:]
-rf1 = rf0[:]
-
-"""
-maxFreq = 0
-maxCount = 0
-for i in xrange(int(freq*0.8), len(lf)):
-  if lf[i] > maxCount:
-    maxFreq = i
-    maxCount = lf[i]
-print maxFreq
-"""
+lf1, rf1 = np.fft.rfft(left), np.fft.rfft(right)
+lSyn, rSyn = np.fft.rfft(left), np.fft.rfft(right)
+#lf1, rf1 = list(lf0), list(rf0)
+#lSyn, rSyn = list(lf0), list(rf0)
 
 # Plot
-plt.figure(1)
-"""
-a = plt.subplot(211)
-r = 2**16/2
-a.set_ylim([-r, r])
-a.set_xlabel('time [s]')
-a.set_ylabel('sample value [-]')
-x = np.arange(44100)/44100
-plt.plot(x, left)
-"""
-"""
-b = plt.subplot(211)
-b.set_xscale('log')
-b.set_xlabel('frequency [Hz]')
-b.set_ylabel('|amplitude|')
-plt.plot(abs(lf))
-"""
 
 def filterFreq(freq, graphNum, lf, rf):
-  lowpass = freq*0.95 # Remove lower frequencies.
-  highpass = freq*1.05 # Remove higher frequencies.
+  lowpass = freq*RECORD_SECONDS*0.95 # Remove lower frequencies.
+  highpass = freq*RECORD_SECONDS*1.05 # Remove higher frequencies.
 
   lf[:lowpass], rf[:lowpass] = 0, 0 # low pass filter (1)
   #lf[55:66], rf[55:66] = 0, 0 # line noise filter (2)
@@ -95,27 +59,47 @@ def filterFreq(freq, graphNum, lf, rf):
   #plt.plot(abs(lf))
 
   plt.plot(ns)
-  plt.savefig('sample-graph.png')
   return ns
 
+plt.figure(1)
+ab = filterFreq(SYN_FREQUENCY, 211, lSyn, rSyn)
+plt.savefig('syn.png')
 
-lfStart = lf0[:]
-rfStart = rf0[:]
-ab = filterFreq(startFreq, 210, lfStart, rfStart)
-
-maxF = 0
+maxA = 0
 index = 0
 for i in xrange(0,len(ab)):
-  if (abs(ab[i]) > maxF):
-    maxF = abs(ab[i])
+  if (abs(ab[i]) > maxA):
+    maxA = abs(ab[i])
     index = i;
 
-ns0 = filterFreq(zeroFreq, 211, lf0, rf0)
-ns1 = filterFreq(oneFreq, 212, lf1, rf1)
+print "SYN Time: %d ms" % (index)
 
-timeIncrement = 15000
-for i in xrange(0,len(ns0), timeIncrement):
- continue 
+plt.figure(2)
+ns0 = filterFreq(ZERO_FREQUENCY, 211, lf0, rf0)
+ns1 = filterFreq(ONE_FREQUENCY, 212, lf1, rf1)
+plt.savefig('ns.png')
+
+result = []
+timeIncrement = int(WINDOW*100000)
+for i in xrange(index+timeIncrement,len(ns0), timeIncrement):
+  sum0 = 1
+  sum1 = 1
+  for j in xrange(i, i+timeIncrement):
+    if j >= len(ns0):
+      break
+    sum0 += abs(ns0[j])
+    sum1 += abs(ns1[j])
+  sum0 = sum0 / timeIncrement
+  sum1 = sum1 / timeIncrement
+  print "sum 0 is %d" % sum0
+  print "sum 1 is %d" % sum1
+  print "~~~~~~~~~~~"
+  if (sum0 > sum1):
+    result.append(0)
+  else: 
+    result.append(1)
+
+print result
 
 # Output to wav file
 """
