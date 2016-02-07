@@ -6,12 +6,15 @@ import wave
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
 RATE = 44100
-RECORD_SECONDS = 5
+RECORD_SECONDS = 2
 WAVE_OUTPUT_FILENAME = "output.wav"
+
+freq = 500.0 * RECORD_SECONDS
 
 p = pyaudio.PyAudio()
 
@@ -42,7 +45,7 @@ lf, rf = np.fft.rfft(left), np.fft.rfft(right)
 
 maxFreq = 0
 maxCount = 0
-for i in xrange(0, len(lf)):
+for i in xrange(int(freq*0.8), len(lf)):
   if lf[i] > maxCount:
     maxFreq = i
     maxCount = lf[i]
@@ -66,8 +69,8 @@ b.set_xlabel('frequency [Hz]')
 b.set_ylabel('|amplitude|')
 plt.plot(abs(lf))
 
-lowpass = 600 # Remove lower frequencies.
-highpass = 900 # Remove higher frequencies.
+lowpass = freq*0.95 # Remove lower frequencies.
+highpass = freq*1.05 # Remove higher frequencies.
 
 lf[:lowpass], rf[:lowpass] = 0, 0 # low pass filter (1)
 #lf[55:66], rf[55:66] = 0, 0 # line noise filter (2)
@@ -78,10 +81,12 @@ nl, nr = np.fft.irfft(lf), np.fft.irfft(rf) # (4)
 ns = np.column_stack((nl,nr)).ravel().astype(np.int16)
 
 c = plt.subplot(212)
-c.set_xscale('log')
-c.set_xlabel('frequency [Hz]')
-c.set_ylabel('|amplitude|')
-plt.plot(abs(lf))
+#c.set_xscale('log')
+#c.set_xlabel('frequency [Hz]')
+#c.set_ylabel('|amplitude|')
+#plt.plot(abs(lf))
+
+plt.plot(ns)
 plt.savefig('sample-graph.png')
 
 # Output to wav file
