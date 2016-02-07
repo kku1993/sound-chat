@@ -11,3 +11,4 @@ def makeTone(numSec, freq, name):
 makeTone(WINDOW, ZERO_FREQUENCY, "zero")
 makeTone(WINDOW, ONE_FREQUENCY, "one")
 makeTone(WINDOW, SYN_FREQUENCY, "syn")
+makeTone(WINDOW, 50, "noise")
