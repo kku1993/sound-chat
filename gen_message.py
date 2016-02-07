@@ -1,10 +1,8 @@
-import config
+from config import *
 
 import pyaudio
 import time
 import wave
-
-CHUNK = 1024
 
 def getFrames(f):
   wf = wave.open(f, 'rb')
@@ -26,15 +24,15 @@ zero = getFrames("zero.wav")
 syn = getFrames("syn.wav")
 
 p = pyaudio.PyAudio()
-stream = p.open(format=16/2,
-                channels=2,
-                rate=44100,
+stream = p.open(format=FORMAT/2,
+                channels=CHANNELS,
+                rate=RATE,
                 output=True)
 
 for f in syn:
   stream.write(f)
 
-for i in xrange(0, 8):
+for i in xrange(0, 4):
   if i % 2 == 0:
     for f in one:
       stream.write(f)
