@@ -14,7 +14,8 @@ RATE = 44100
 RECORD_SECONDS = 2
 WAVE_OUTPUT_FILENAME = "output.wav"
 
-freq = 500.0 * RECORD_SECONDS
+zeroFreq = 500.0 * RECORD_SECONDS
+oneFreq = 1000.0 * RECORD_SECONDS
 
 p = pyaudio.PyAudio()
 
@@ -41,8 +42,12 @@ p.terminate()
 # Low pass filter
 sound = np.fromstring("".join(frames), dtype=np.int16)
 left, right = sound[0::2], sound[1::2]
-lf, rf = np.fft.rfft(left), np.fft.rfft(right)
+lf0, rf0 = np.fft.rfft(left), np.fft.rfft(right)
 
+lf1 = lf0[:]
+rf1 = rf0[:]
+
+"""
 maxFreq = 0
 maxCount = 0
 for i in xrange(int(freq*0.8), len(lf)):
@@ -50,6 +55,7 @@ for i in xrange(int(freq*0.8), len(lf)):
     maxFreq = i
     maxCount = lf[i]
 print maxFreq
+"""
 
 # Plot
 plt.figure(1)
@@ -62,32 +68,66 @@ a.set_ylabel('sample value [-]')
 x = np.arange(44100)/44100
 plt.plot(x, left)
 """
-
+"""
 b = plt.subplot(211)
 b.set_xscale('log')
 b.set_xlabel('frequency [Hz]')
 b.set_ylabel('|amplitude|')
 plt.plot(abs(lf))
+"""
 
+def filterFreq(freq, graphNum, lf, rf):
+  lowpass = freq*0.95 # Remove lower frequencies.
+  highpass = freq*1.05 # Remove higher frequencies.
+
+  lf[:lowpass], rf[:lowpass] = 0, 0 # low pass filter (1)
+  #lf[55:66], rf[55:66] = 0, 0 # line noise filter (2)
+  lf[highpass:], rf[highpass:] = 0,0 # high pass filter (3)
+
+  # Inverse FFT to convert frequencies back to sound.
+  nl, nr = np.fft.irfft(lf), np.fft.irfft(rf) # (4)
+  ns = np.column_stack((nl,nr)).ravel().astype(np.int16)
+
+  c = plt.subplot(graphNum)
+  #c.set_xscale('log')
+  #c.set_xlabel('frequency [Hz]')
+  #c.set_ylabel('|amplitude|')
+  #plt.plot(abs(lf))
+
+  plt.plot(ns)
+  plt.savefig('sample-graph.png')
+  return ns
+
+"""
+lfStart = lf0[:]
+rfStart = rf0[:]
 lowpass = freq*0.95 # Remove lower frequencies.
 highpass = freq*1.05 # Remove higher frequencies.
 
-lf[:lowpass], rf[:lowpass] = 0, 0 # low pass filter (1)
+lfStart[:lowpass], rfStart[:lowpass] = 0, 0 # low pass filter (1)
 #lf[55:66], rf[55:66] = 0, 0 # line noise filter (2)
-lf[highpass:], rf[highpass:] = 0,0 # high pass filter (3)
+lfStart[highpass:], rfStart[highpass:] = 0,0 # high pass filter (3)
 
 # Inverse FFT to convert frequencies back to sound.
-nl, nr = np.fft.irfft(lf), np.fft.irfft(rf) # (4)
-ns = np.column_stack((nl,nr)).ravel().astype(np.int16)
+a, b = np.fft.irfft(lfStart), np.fft.irfft(rfStart) # (4)
+ab = np.column_stack((a,b)).ravel().astype(np.int16)
+"""
 
-c = plt.subplot(212)
-#c.set_xscale('log')
-#c.set_xlabel('frequency [Hz]')
-#c.set_ylabel('|amplitude|')
-#plt.plot(abs(lf))
+ab = filterFreq(startFreq, 210, lfStart, rfStart)
 
-plt.plot(ns)
-plt.savefig('sample-graph.png')
+maxF = 0
+index = 0
+for (int i = 0; i < len(ab); i++):
+  if (abs(ab[i]) > maxF):
+    maxF = abs(ab[i])
+    index = i;
+
+ns0 = filterFreq(zeroFreq, 211, lf0, rf0)
+ns1 = filterFreq(oneFreq, 212, lf1, rf1)
+
+timeIncrement = 15000
+for (int i = 0; i < len(ns0); i += timeIncrement):
+ continue 
 
 # Output to wav file
 """
