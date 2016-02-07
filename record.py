@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 
 
 CHUNK = 1024
-FORMAT = pyaudio.paInt16
 CHANNELS = 2
 RATE = 44100
 RECORD_SECONDS = 2
@@ -20,7 +19,7 @@ oneFreq = 1000.0 * RECORD_SECONDS
 
 p = pyaudio.PyAudio()
 
-stream = p.open(format=FORMAT,
+stream = p.open(format=pyaudio.paInt16,
                 channels=CHANNELS,
                 rate=RATE,
                 input=True,

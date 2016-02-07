@@ -1,7 +1,6 @@
 # Generate wav files for ZERO, ONE, and SYN tones
 
-import sys
-sys.path.append('/usr/local/lib/python2.7/site-packages')
+import config
 
 from pippi import dsp
 
