@@ -14,6 +14,7 @@ RATE = 44100
 RECORD_SECONDS = 2
 WAVE_OUTPUT_FILENAME = "output.wav"
 
+startFreq = 100.0 * RECORD_SECONDS
 zeroFreq = 500.0 * RECORD_SECONDS
 oneFreq = 1000.0 * RECORD_SECONDS
 
@@ -98,26 +99,14 @@ def filterFreq(freq, graphNum, lf, rf):
   plt.savefig('sample-graph.png')
   return ns
 
-"""
+
 lfStart = lf0[:]
 rfStart = rf0[:]
-lowpass = freq*0.95 # Remove lower frequencies.
-highpass = freq*1.05 # Remove higher frequencies.
-
-lfStart[:lowpass], rfStart[:lowpass] = 0, 0 # low pass filter (1)
-#lf[55:66], rf[55:66] = 0, 0 # line noise filter (2)
-lfStart[highpass:], rfStart[highpass:] = 0,0 # high pass filter (3)
-
-# Inverse FFT to convert frequencies back to sound.
-a, b = np.fft.irfft(lfStart), np.fft.irfft(rfStart) # (4)
-ab = np.column_stack((a,b)).ravel().astype(np.int16)
-"""
-
 ab = filterFreq(startFreq, 210, lfStart, rfStart)
 
 maxF = 0
 index = 0
-for (int i = 0; i < len(ab); i++):
+for i in xrange(0,len(ab)):
   if (abs(ab[i]) > maxF):
     maxF = abs(ab[i])
     index = i;
@@ -126,7 +115,7 @@ ns0 = filterFreq(zeroFreq, 211, lf0, rf0)
 ns1 = filterFreq(oneFreq, 212, lf1, rf1)
 
 timeIncrement = 15000
-for (int i = 0; i < len(ns0); i += timeIncrement):
+for i in xrange(0,len(ns0), timeIncrement):
  continue 
 
 # Output to wav file
